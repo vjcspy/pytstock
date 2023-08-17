@@ -15,7 +15,7 @@ def main():
         time.sleep(0.01)
         total += 1
 
-    logger.info(f'Processed {colored(total,"blue")} things.')
+    logger.info(f'Processed {colored(str(total), "blue")} things.')
 
 
 if __name__ == "__main__":
