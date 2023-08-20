@@ -18,7 +18,7 @@ class TestPriceHistoryHelper(unittest.TestCase):
             "close": [18300, 19450, 19500]
         }
         self.df = pd.DataFrame(data)
-        self.helper = PriceHistoryHelper(self.df)
+        self.helper = PriceHistoryHelper(self.df, skip_validate=True)
 
     def test_sma(self):
         """
@@ -71,7 +71,7 @@ class TestPriceHistoryHelperStdev(unittest.TestCase):
             'low': [5, 10, 15, 20],
         }
         self.df = pd.DataFrame(data)
-        self.helper = PriceHistoryHelper(self.df)
+        self.helper = PriceHistoryHelper(self.df, skip_validate=True)
 
     def test_stdev(self):
         """
@@ -115,6 +115,37 @@ class TestPriceHistoryHelperRealData(unittest.TestCase):
             helper.set_date("2023-08-18")
             stdev = helper.stdev(7)
             self.assertIsNot(stdev, None)
+
+
+class TestPriceHistoryHelperTrueRangeAndPreviousClose(unittest.TestCase):
+    def setUp(self):
+        # Create a sample DataFrame for testing
+        data = [
+            {'date': '2022-01-01', 'high': 10, 'low': 5, 'close': 8},
+            {'date': '2022-01-02', 'high': 15, 'low': 7, 'close': 12},
+            {'date': '2022-01-03', 'high': 20, 'low': 10, 'close': 18}
+        ]
+        self.helper = PriceHistoryHelper(data, skip_validate=True)
+
+    def test_true_range_by_date(self):
+        # Test true range calculation for a valid date
+        self.assertEqual(self.helper.true_range_by_date('2022-01-02'), 8)
+
+        # Test true range calculation for a date with missing previous close value
+        self.assertIsNone(self.helper.true_range_by_date('2022-01-01'))
+
+        # Test true range calculation for a date with missing target row
+        self.assertIsNone(self.helper.true_range_by_date('2022-01-04'))
+
+    def test_get_previous_close_by_date(self):
+        # Test getting previous close for a valid date
+        self.assertEqual(self.helper.get_previous_close_by_date('2022-01-02'), 8)
+
+        # Test getting previous close for a date with missing previous close value
+        self.assertIsNone(self.helper.get_previous_close_by_date('2022-01-01'))
+
+        # Test getting previous close for a date with missing target row
+        self.assertIsNone(self.helper.get_previous_close_by_date('2022-01-04'))
 
 
 if __name__ == "__main__":
