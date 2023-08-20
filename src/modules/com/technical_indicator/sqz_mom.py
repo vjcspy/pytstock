@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 from modules.com.technical_indicator.technical_indicator_abstract import TechnicalIndicatorAbstract
+from modules.com.util.avg import avg
 from modules.com.util.linreg import linreg
 from modules.com.util.price_history_helper import PriceHistoryHelper
 
@@ -45,20 +46,20 @@ class SqzMom(TechnicalIndicatorAbstract):
         # Calculate BB
         basic = price_helper.sma_by_source_func(config.length_bb, source_func)
         dev = config.mult_bb * price_helper.stdev(config.length_bb, source_func)
-        upperBB = basic + dev
-        lowerBB = basic - dev
+        upperBB = round(basic + dev)
+        lowerBB = round(basic - dev)
 
         # Calculate KC
         ma = price_helper.sma_by_source_func(config.length_kc, source_func)
         range_ma = self._get_range_sma(self.get_date())
-        upperKC = ma + range_ma * config.mult_kc
-        lowerKC = ma - range_ma * config.mult_kc
+        upperKC = round(ma + range_ma * config.mult_kc)
+        lowerKC = round(ma - range_ma * config.mult_kc)
 
         sqzOn = (lowerBB > lowerKC) and (upperBB < upperKC)
         sqzOff = (lowerBB < lowerKC) and (upperBB > upperKC)
         noSqz = (sqzOn == False) and (sqzOff == False)
 
-        value = self._get_value()
+        value = round(self._get_value()[0])
 
         return value, sqzOn, sqzOff, noSqz
 
@@ -81,9 +82,9 @@ class SqzMom(TechnicalIndicatorAbstract):
                 return None
 
             highest_high = subset_rows['high'].max()
-            lowest_low = subset_rows['low'].max()
+            lowest_low = subset_rows['low'].min()
 
-            values.append(source - np.mean([np.mean([highest_high, lowest_low]), sma]))
+            values.append(source - avg(avg(highest_high, lowest_low), sma))
 
             # Move to the previous date
             date = helper.get_previous_row_by_date(date)['date']

@@ -17,7 +17,7 @@ sqzs = []
 
 for i in range(10):
     date = data[i]['date']
-    value = sqz.set_date(date).get_data()
+    value, sqzOn, sqzOff, noSqz = sqz.set_date(date).get_data()
     sqzs.append(value)
 
 print(sqzs)
