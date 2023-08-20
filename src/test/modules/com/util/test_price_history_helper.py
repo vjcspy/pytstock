@@ -1,7 +1,81 @@
 import unittest
 import pandas as pd
+
 from modules.com.util.price_history_helper import PriceHistoryHelper
 from modules.core.util.get_json_data import get_json_data
+
+mock_data = [
+    {
+        "date": "2023-08-18",
+        "high": 19400,
+        "low": 18100,
+        "close": 18300,
+        "open": 19350,
+        "volume": 681400,
+        "trade": 252,
+        "value": 12865663308,
+        "buy": 621,
+        "buyQuantity": 988639,
+        "sell": 486,
+        "sellQuantity": 1196777
+    },
+    {
+        "date": "2023-08-17",
+        "high": 19650,
+        "low": 19400,
+        "close": 19450,
+        "open": 19400,
+        "volume": 304800,
+        "trade": 147,
+        "value": 5952865920,
+        "buy": 431,
+        "buyQuantity": 662865,
+        "sell": 348,
+        "sellQuantity": 732655
+    },
+    {
+        "date": "2023-08-16",
+        "high": 19700,
+        "low": 19450,
+        "close": 19500,
+        "open": 19700,
+        "volume": 175300,
+        "trade": 126,
+        "value": 3429544658,
+        "buy": 372,
+        "buyQuantity": 392805,
+        "sell": 288,
+        "sellQuantity": 474578
+    },
+    {
+        "date": "2023-08-15",
+        "high": 20050,
+        "low": 19700,
+        "close": 19700,
+        "open": 19700,
+        "volume": 229700,
+        "trade": 142,
+        "value": 4545825019,
+        "buy": 304,
+        "buyQuantity": 505068,
+        "sell": 391,
+        "sellQuantity": 674611
+    },
+    {
+        "date": "2023-08-14",
+        "high": 20000,
+        "low": 19350,
+        "close": 19700,
+        "open": 20000,
+        "volume": 300100,
+        "trade": 193,
+        "value": 5896139725,
+        "buy": 483,
+        "buyQuantity": 757618,
+        "sell": 449,
+        "sellQuantity": 843083
+    }
+]
 
 
 class TestPriceHistoryHelper(unittest.TestCase):
@@ -146,6 +220,119 @@ class TestPriceHistoryHelperTrueRangeAndPreviousClose(unittest.TestCase):
 
         # Test getting previous close for a date with missing target row
         self.assertIsNone(self.helper.get_previous_close_by_date('2022-01-04'))
+
+
+class PriceHistoryHelperTestGetPreviousRow(unittest.TestCase):
+
+    def setUp(self):
+        self.data = mock_data
+
+    def test_get_previous_row_by_date(self):
+        helper = PriceHistoryHelper(self.data)
+
+        # Test for previous row with 1 day difference
+        prev_row_1 = helper.get_previous_row_by_date("2023-08-18", days=1)
+        expected_prev_row_1 = {
+            "date": "2023-08-17",
+            "high": 19650,
+            "low": 19400,
+            "close": 19450,
+            "open": 19400,
+            "volume": 304800,
+            "trade": 147,
+            "value": 5952865920,
+            "buy": 431,
+            "buyQuantity": 662865,
+            "sell": 348,
+            "sellQuantity": 732655
+        }
+        self.assertEqual(prev_row_1.to_dict(), expected_prev_row_1)
+
+        # Test for previous row with 2 days difference
+        prev_row_2 = helper.get_previous_row_by_date("2023-08-16", days=2)
+        expected_prev_row_2 = {
+            "date": "2023-08-14",
+            "high": 20000,
+            "low": 19350,
+            "close": 19700,
+            "open": 20000,
+            "volume": 300100,
+            "trade": 193,
+            "value": 5896139725,
+            "buy": 483,
+            "buyQuantity": 757618,
+            "sell": 449,
+            "sellQuantity": 843083
+        }
+        self.assertEqual(prev_row_2.to_dict(), expected_prev_row_2)
+
+        # Test for previous row with 0 days difference (same date)
+        prev_row_0 = helper.get_previous_row_by_date("2023-08-16", days=3)
+        self.assertIsNone(prev_row_0)
+
+
+class PriceHistoryHelperTestGetSubsetRowsByDate(unittest.TestCase):
+
+    def setUp(self):
+        self.data = mock_data
+
+    def test_get_subset_rows_by_date(self):
+        helper = PriceHistoryHelper(self.data)
+
+        # Test for subset rows with 1 day difference
+        subset_rows_1 = helper.get_subset_rows_by_date("2023-08-18", days=1)
+        expected_subset_rows_1 = [
+            {
+                "date": "2023-08-18",
+                "high": 19400,
+                "low": 18100,
+                "close": 18300,
+                "open": 19350,
+                "volume": 681400,
+                "trade": 252,
+                "value": 12865663308,
+                "buy": 621,
+                "buyQuantity": 988639,
+                "sell": 486,
+                "sellQuantity": 1196777
+            },
+        ]
+        pd.testing.assert_frame_equal(subset_rows_1, pd.DataFrame(expected_subset_rows_1))
+
+        # Test for subset rows with 1 day difference
+        subset_rows_2 = helper.get_subset_rows_by_date("2023-08-15", days=2)
+        expected_subset_rows_2 = [
+            {
+                "date": "2023-08-15",
+                "high": 20050,
+                "low": 19700,
+                "close": 19700,
+                "open": 19700,
+                "volume": 229700,
+                "trade": 142,
+                "value": 4545825019,
+                "buy": 304,
+                "buyQuantity": 505068,
+                "sell": 391,
+                "sellQuantity": 674611
+            },
+            {
+                "date": "2023-08-14",
+                "high": 20000,
+                "low": 19350,
+                "close": 19700,
+                "open": 20000,
+                "volume": 300100,
+                "trade": 193,
+                "value": 5896139725,
+                "buy": 483,
+                "buyQuantity": 757618,
+                "sell": 449,
+                "sellQuantity": 843083
+            }
+        ]
+        pd.testing.assert_frame_equal(subset_rows_2.reset_index(drop=True), pd.DataFrame(expected_subset_rows_2),
+                                      check_index_type=False)
 
 
 if __name__ == "__main__":

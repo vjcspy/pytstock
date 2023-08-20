@@ -45,6 +45,7 @@ class PriceHistoryHelper:
         if self._df is None:
             df = pd.DataFrame(self._data)
             self._df = df.sort_values(by='date', ascending=False)
+            self._df.reset_index(drop=True, inplace=True)
 
         return self._df.copy(deep=True)
 
@@ -117,22 +118,50 @@ class PriceHistoryHelper:
 
         return transformed_data.std()
 
-    def get_previous_close(self):
-        return self.get_previous_close_by_date(self._date)
+    def get_previous_close(self, days: int = 1):
+        return self.get_previous_close_by_date(self._date, days)
 
-    def get_previous_close_by_date(self, date: str) -> float | None:
+    def get_previous_close_by_date(self, date: str, days: int = 1) -> float | None:
         df = self._get_df()
 
         # Find the index of the target date
         idx = df[df['date'] == date].index
 
-        if len(idx) == 0 or idx[0] == 0:
+        if len(idx) == 0 or len(df) <= idx[0] + days:
             return None
 
         # Get the previous close value
-        prev_close = df.loc[idx[0] - 1, 'close']
+        prev_close = df.loc[idx[0] + days, 'close']
 
         return prev_close
+
+    def get_previous_row_by_date(self, date: str, days: int = 1) -> pd.Series | None:
+        df = self._get_df()
+
+        # Find the index of the target date
+        idx = df[df['date'] == date].index
+
+        if len(idx) == 0 or len(df) <= idx[0] + days:
+            return None
+
+        # Get the close value of the previous row
+        prev = df.loc[idx[0] + days]
+
+        return prev
+
+    def get_subset_rows_by_date(self, date: str, days: int = 1) -> pd.DataFrame | None:
+        df = self._get_df()
+
+        # Find the index of the target date
+        idx = df[df['date'] == date].index
+
+        if len(idx) == 0 or len(df) < idx[0] + days:
+            return None
+
+        # Get the close value of the previous row
+        subset_rows = df.loc[idx[0]: idx[0] + days - 1]
+
+        return subset_rows
 
     def tr(self):
         return self.true_range()

@@ -1,7 +1,7 @@
 import pandas as pd
 from abc import ABC, abstractmethod
 
-from modules.com.technical_indicator.error import DateNotSetError
+from modules.com.technical_indicator.error import DateNotSetError, ConfigNotSetError
 from modules.com.util.price_history_helper import PriceHistoryHelper
 
 
@@ -39,6 +39,9 @@ class TechnicalIndicatorAbstract(ABC):
     def get_data(self):
         if self._date is None:
             raise DateNotSetError()
+
+        if self.get_config() is None:
+            raise ConfigNotSetError()
 
     def get_data_for_date(self, date: str):
         self._date = date
