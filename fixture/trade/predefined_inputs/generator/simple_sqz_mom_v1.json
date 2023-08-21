@@ -1,4 +1,5 @@
 {
+  "api": "@predefined_input/generator/v1",
   "strategy": {
     "name": "simple_sqz_mom_strategy",
     "input": {

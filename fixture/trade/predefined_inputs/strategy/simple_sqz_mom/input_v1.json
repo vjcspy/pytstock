@@ -1,0 +1,8 @@
+{
+  "api": "@predefined_input/strategy/v1",
+  "input": {
+    "filter": {},
+    "signal": {},
+    "action": {}
+  }
+}

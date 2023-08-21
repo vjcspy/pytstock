@@ -3,9 +3,13 @@ from typing import Any, Self
 
 
 class StrategyAbstract(ABC):
-    def __init__(self, strategy_input: Any, filters: list, signals: list, actions: list, analysis: list):
-        self._for_only_symbol = None
+    def __init__(self, strategy_input: Any, filters: list, signals: list, actions: list):
+        self.actions = actions
+        self.signals = signals
+        self.filters = filters
         self.strategy_input = strategy_input
+        self._for_only_symbol = None
+        self._load_input()
 
     @abstractmethod
     def get_input_description(self):
@@ -44,3 +48,7 @@ class StrategyAbstract(ABC):
 
         """
         return self._for_only_symbol
+
+    @abstractmethod
+    def _load_input(self):
+        pass
