@@ -1,0 +1,11 @@
+{
+  "strategy": {
+    "name": "simple_sqz_mom_strategy",
+    "input": {
+      "type": "files",
+      "data": [
+        "predefined_inputs/strategy/simple_sqz_mom/input_v1.json"
+      ]
+    }
+  }
+}

@@ -10,12 +10,12 @@ def Logger(name: str = "root") -> logging.Logger:
     if cached:
         return cached
     else:
-        l = logging.getLogger(name)
-        l.setLevel(level=logging.DEBUG)
+        _logger = logging.getLogger(name)
+        _logger.setLevel(level=logging.DEBUG)
         ch = logging.StreamHandler()
         ch.setLevel(logging.DEBUG)
 
         ch.setFormatter(CustomFormatter())
-        l.addHandler(ch)
-        _log_instances[name] = l
+        _logger.addHandler(ch)
+        _log_instances[name] = _logger
         return _log_instances[name]

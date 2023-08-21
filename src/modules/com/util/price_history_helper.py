@@ -1,6 +1,6 @@
 import pandas as pd
 from datetime import datetime
-from marshmallow import Schema, fields, ValidationError, validate
+from marshmallow import Schema, fields, validate
 from modules.core.util.df_get_row_by_column_value import df_get_row_by_column_value
 
 
