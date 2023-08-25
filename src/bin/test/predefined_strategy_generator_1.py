@@ -3,7 +3,9 @@ from modules.trade.generator.predefined_strategy_generator import PredefinedStra
 import sys
 
 try:
-    generator = PredefinedStrategyGenerator(predefined_input="predefined_inputs/generator/simple_sqz_mom_v1.json")
+    generator = PredefinedStrategyGenerator(
+        predefined_input="fixture/trade/predefined_inputs/generator/simple_sqz_mom_v1.json"
+    )
 
     generator.generate()
 except Exception as e:

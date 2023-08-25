@@ -1,8 +1,24 @@
 {
   "api": "@predefined_input/strategy/v1",
   "input": {
-    "filter": {},
+    "range": {
+      "type": "relative",
+      "from": {
+        "modify": "shift",
+        "amount": "2",
+        "amount_type": "years"
+      },
+      "to": {
+      }
+    },
+    "filter": {
+    },
     "signal": {},
-    "action": {}
+    "action": {
+      "buy": {
+      },
+      "sell": {
+      }
+    }
   }
 }

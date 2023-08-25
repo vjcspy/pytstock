@@ -1,9 +1,9 @@
-from modules.trade.strategy.simple_sqz_mom_strategy import SimpleSqzMomStrategy
+from modules.trade.strategy.simple_strategy_v1 import SimpleStrategyV1
 from modules.trade.strategy.strategy_manager import StrategyManager
 
 STRATEGIES = {
-    SimpleSqzMomStrategy.name: {
-        "class": SimpleSqzMomStrategy
+    SimpleStrategyV1.name: {
+        "class": SimpleStrategyV1
     }
 }
 

@@ -1,16 +1,75 @@
 from abc import abstractmethod, ABC
-from typing import Any, Self
+from typing import Self
+
+import arrow
+
+SCHEMA_INPUT_V1 = {
+    "type": "object",
+    "properties": {
+        "api": {
+            "type": "string",
+            "pattern": "^@predefined_input/strategy/v.*$",
+            "description": "API endpoint"
+        },
+        "input": {
+            "type": "object",
+            "properties": {
+                "range": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "enum": ["relative", "absolute"]
+                        },
+                        "from": {
+                            "type": "object",
+                            "properties": {
+                                "modify": {
+                                    "type": "string",
+                                    "enum": ["shift"]
+                                },
+                                "amount": {
+                                    "type": "number"
+                                },
+                                "amount_type": {
+                                    "type": "string",
+                                    "enum": ["years"]
+                                }
+                            },
+                            "required": ["modify", "amount", "amount_type"]
+                        },
+                        "to": {
+                            "type": "object"
+                        }
+                    },
+                    "required": ["type", "from"]
+                },
+                "filter": {
+                    "type": "object"
+                },
+                "signal": {
+                    "type": "object"
+                },
+                "action": {
+                    "type": "object",
+                    "properties": {
+                        "buy": {
+                            "type": "object"
+                        },
+                        "sell": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "required": ["range", "filter", "signal", "action"]
+        }
+    },
+    "required": ["api", "input"]
+}
 
 
 class StrategyAbstract(ABC):
-    def __init__(self, strategy_input: Any, filters: list, signals: list, actions: list):
-        self.actions = actions
-        self.signals = signals
-        self.filters = filters
-        self.strategy_input = strategy_input
-        self._for_only_symbol = None
-        self._load_input()
-
     @abstractmethod
     def get_input_description(self):
         """
@@ -24,31 +83,9 @@ class StrategyAbstract(ABC):
         """
         pass
 
-    def set_for_only(self, symbol: str) -> Self:
-        """
-        Sets the value of the _for_only_symbol attribute to the specified symbol.
-
-        Args:
-            symbol (str): The symbol to be set.
-
-        Returns:
-            Self: The modified instance of the class.
-
-        """
-        self._for_only_symbol = symbol
-
-        return self
-
-    def get_for_only(self):
-        """
-        Retrieves the value of the '_for_only_symbol' attribute.
-
-        Returns:
-            The value of the '_for_only_symbol' attribute.
-
-        """
-        return self._for_only_symbol
+    def set_symbol(self, symbol: str) -> Self:
+        pass
 
     @abstractmethod
-    def _load_input(self):
+    def load_input(self, input_config: dict):
         pass

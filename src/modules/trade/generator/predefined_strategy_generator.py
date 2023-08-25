@@ -1,11 +1,16 @@
 from typing import Any
 
 from modules.core.logging.logger import Logger
-from modules.trade.error import TradeFileNotFoundError
+from modules.core.util.environment import env
+from modules.core.util.hash_string_md5 import hash_string_md5
+from modules.core.util.http_client import http_client
+from modules.trade.error import TradeFileNotFoundError, StrategyNotFound
 from modules.trade.generator.strategy_generator_abstract import StrategyGeneratorAbstract
 import simplejson as json
 import os
 import jsonschema
+
+from modules.trade.strategy.strategy_abstract import StrategyAbstract
 
 PRE_DEFINED_INPUT_SCHEMA_V1 = {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -45,8 +50,10 @@ class PredefinedStrategyGenerator(StrategyGeneratorAbstract):
 
     def _load_input(self):
         # Lấy đường dẫn của thư mục project. Giả sử thư mục project của bạn là thư mục cha của thư mục 'src'
-        file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), self.predefined_input))
-        self.logger.info(f"Load input by path: {file_path}")
+        file_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", self.predefined_input)
+        )
+        self.logger.info(f"Load input of generator by path: {file_path}")
         if not os.path.exists(file_path):
             raise TradeFileNotFoundError()
 
@@ -63,10 +70,67 @@ class PredefinedStrategyGenerator(StrategyGeneratorAbstract):
         # Validate input
         jsonschema.validate(data, PRE_DEFINED_INPUT_SCHEMA_V1)
 
-        self.strategy = data['strategy']['name']
+        # load strategy
+        self._load_input_strategy_v1(data['strategy'])
 
-        if data['strategy']['input']['type'] == 'files':
-            self.strategy_inputs = data['strategy']['input']['data']
+    def _load_input_strategy_v1(self, strategy_config):
+        # check if there is a strategy with that name
+        self.strategy_name = strategy_config['name']
+        if self.strategy_manager.get_strategy_map().get(self.strategy_name) is not None:
+            try:
+                self.strategy: StrategyAbstract = \
+                    self.strategy_manager.get_strategy_map().get(strategy_config['name'])['class']()
+            except Exception:
+                pass
+
+        if self.strategy is None:
+            raise StrategyNotFound()
+
+        # if the configuration was set by files type
+        if strategy_config['input']['type'] == 'files':
+            self.strategy_inputs_type = 'files'
+            self.strategy_inputs = self._load_input_strategy_files_v1(strategy_config)
+
+    def _load_input_strategy_files_v1(self, strategy_config):
+        if not isinstance(strategy_config['input']['data'], list):
+            return
+        _input_configs = []
+        for _file in strategy_config['input']['data']:
+            file_path = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", _file)
+            )
+            if not os.path.exists(file_path):
+                raise TradeFileNotFoundError('Not found strategy input configuration')
+            with open(file_path, 'r') as file:
+                data = json.load(file)
+                _input_configs.append({"file": _file, "data": data})
+
+        # Simulate load input for validation, we want all inputs is valid before send it to api server to create job
+        for _input_config in _input_configs:
+            self.strategy.load_input(input_config=_input_config["data"])
+
+        return _input_configs
 
     def generate(self):
-        self.logger.info(f"Process generate with strategy '{self.strategy}' and input: {self.strategy_inputs}")
+        self.logger.info(
+            f"Process generate with strategy '{self.strategy}' and input type {self.strategy_inputs_type} with data {self.strategy_inputs}"
+        )
+        client = http_client()
+        url = env().get('PS_API_END_POINT') + "/strategy/process-data"
+        # call api service to generate jobs for strategy and it's inputs
+        for config in self.strategy_inputs:
+            strategy_input = config['data']['input']
+            from_date, to_date = self._get_range_data(strategy_input["range"])
+            hash_key = hash_string_md5(self.strategy_name + str(strategy_input) + from_date + to_date)
+            data = {
+                "strategy_name": self.strategy_name,
+                "from_date": from_date,
+                "to_date": to_date,
+                "strategy_input": strategy_input,
+                "hash_key": hash_key
+            }
+
+            print(data)
+
+            res = client.post(url, data)
+            res.raise_for_status()
