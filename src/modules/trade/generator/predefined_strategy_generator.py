@@ -2,7 +2,6 @@ from typing import Any
 
 from modules.core.logging.logger import Logger
 from modules.core.util.environment import env
-from modules.core.util.hash_string_md5 import hash_string_md5
 from modules.core.util.http_client import http_client
 from modules.trade.error import TradeFileNotFoundError, StrategyNotFound
 from modules.trade.generator.strategy_generator_abstract import StrategyGeneratorAbstract
@@ -11,32 +10,33 @@ import os
 import jsonschema
 
 from modules.trade.strategy.strategy_abstract import StrategyAbstract
+from modules.trade.util.get_strategy_hash import get_strategy_hash
 
 PRE_DEFINED_INPUT_SCHEMA_V1 = {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "type": "object",
-    "properties": {
-        "api": {"type": "string"},
-        "strategy": {
-            "type": "object",
-            "properties": {
-                "name": {"type": "string"},
-                "input": {
-                    "type": "object",
-                    "properties": {
-                        "type": {"type": "string"},
-                        "data": {
-                            "type": "array",
-                            "items": {"type": "string"}
-                        }
-                    },
-                    "required": ["type", "data"]
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+                "api": {"type": "string"},
+                "strategy": {
+                        "type": "object",
+                        "properties": {
+                                "name": {"type": "string"},
+                                "input": {
+                                        "type": "object",
+                                        "properties": {
+                                                "type": {"type": "string"},
+                                                "data": {
+                                                        "type": "array",
+                                                        "items": {"type": "string"}
+                                                }
+                                        },
+                                        "required": ["type", "data"]
+                                }
+                        },
+                        "required": ["name", "input"]
                 }
-            },
-            "required": ["name", "input"]
-        }
-    },
-    "required": ["strategy"]
+        },
+        "required": ["strategy"]
 }
 
 
@@ -51,7 +51,7 @@ class PredefinedStrategyGenerator(StrategyGeneratorAbstract):
     def _load_input(self):
         # Lấy đường dẫn của thư mục project. Giả sử thư mục project của bạn là thư mục cha của thư mục 'src'
         file_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", self.predefined_input)
+                os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", self.predefined_input)
         )
         self.logger.info(f"Load input of generator by path: {file_path}")
         if not os.path.exists(file_path):
@@ -97,7 +97,7 @@ class PredefinedStrategyGenerator(StrategyGeneratorAbstract):
         _input_configs = []
         for _file in strategy_config['input']['data']:
             file_path = os.path.abspath(
-                os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", _file)
+                    os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", _file)
             )
             if not os.path.exists(file_path):
                 raise TradeFileNotFoundError('Not found strategy input configuration')
@@ -107,13 +107,13 @@ class PredefinedStrategyGenerator(StrategyGeneratorAbstract):
 
         # Simulate load input for validation, we want all inputs is valid before send it to api server to create job
         for _input_config in _input_configs:
-            self.strategy.load_input(input_config=_input_config["data"])
+            self.strategy.load_input(input_config = _input_config["data"])
 
         return _input_configs
 
     def generate(self):
         self.logger.info(
-            f"Process generate with strategy '{self.strategy}' and input type {self.strategy_inputs_type} with data {self.strategy_inputs}"
+                f"Process generate with strategy '{self.strategy_name}' and input type {self.strategy_inputs_type} with data {self.strategy_inputs}"
         )
         client = http_client()
         url = env().get('PS_API_END_POINT') + "/strategy/process-data"
@@ -121,16 +121,29 @@ class PredefinedStrategyGenerator(StrategyGeneratorAbstract):
         for config in self.strategy_inputs:
             strategy_input = config['data']['input']
             from_date, to_date = self._get_range_data(strategy_input["range"])
-            hash_key = hash_string_md5(self.strategy_name + str(strategy_input) + from_date + to_date)
+            hash_key = get_strategy_hash(
+                    strategy_name = self.strategy_name,
+                    strategy_input = strategy_input,
+                    from_date = from_date,
+                    to_date = to_date
+            )
             data = {
-                "strategy_name": self.strategy_name,
-                "from_date": from_date,
-                "to_date": to_date,
-                "strategy_input": strategy_input,
-                "hash_key": hash_key
+                    "strategy_name": self.strategy_name,
+                    "from_date": from_date,
+                    "to_date": to_date,
+                    "strategy_input": strategy_input,
+                    "hash_key": hash_key
             }
 
             print(data)
 
             res = client.post(url, data)
-            res.raise_for_status()
+
+            if res.status_code == 409:
+                self.logger.warning(
+                        f"Already generated for strategy {self.strategy_name} and input name {config['data']['name']}"
+                )
+            elif res.status_code == 201:
+                self.logger.info(
+                        f"OK generated for strategy {self.strategy_name} and input name {config['data']['name']}"
+                )

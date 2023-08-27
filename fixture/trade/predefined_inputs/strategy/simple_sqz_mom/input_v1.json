@@ -1,5 +1,6 @@
 {
   "api": "@predefined_input/strategy/v1",
+  "name": "simple_sqz_mom_strategy_input_v1",
   "input": {
     "range": {
       "type": "relative",

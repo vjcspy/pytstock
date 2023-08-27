@@ -27,7 +27,6 @@ pydantic==2.2.1
 pydantic_core==2.6.1
 Pygments==2.16.1
 pyparsing==3.0.9
--e git+ssh://git@github.com/vjcspy/pytstock.git@e5ad5bcba6218b9ffdfc5d728d34c99a23eeeb86#egg=pystock&subdirectory=src
 python-dateutil==2.8.2
 python-dotenv==1.0.0
 pytz==2023.3

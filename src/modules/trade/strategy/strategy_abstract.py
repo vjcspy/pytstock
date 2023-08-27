@@ -4,68 +4,72 @@ from typing import Self
 import arrow
 
 SCHEMA_INPUT_V1 = {
-    "type": "object",
-    "properties": {
-        "api": {
-            "type": "string",
-            "pattern": "^@predefined_input/strategy/v.*$",
-            "description": "API endpoint"
-        },
-        "input": {
-            "type": "object",
-            "properties": {
-                "range": {
-                    "type": "object",
-                    "properties": {
-                        "type": {
-                            "type": "string",
-                            "enum": ["relative", "absolute"]
-                        },
-                        "from": {
-                            "type": "object",
-                            "properties": {
-                                "modify": {
-                                    "type": "string",
-                                    "enum": ["shift"]
+        "type": "object",
+        "properties": {
+                "api": {
+                        "type": "string",
+                        "pattern": "^@predefined_input/strategy/v.*$",
+                        "description": "API endpoint"
+                },
+                "name": {
+                        "type": "string",
+                        "description": "Strategy Input name"
+                },
+                "input": {
+                        "type": "object",
+                        "properties": {
+                                "range": {
+                                        "type": "object",
+                                        "properties": {
+                                                "type": {
+                                                        "type": "string",
+                                                        "enum": ["relative", "absolute"]
+                                                },
+                                                "from": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                                "modify": {
+                                                                        "type": "string",
+                                                                        "enum": ["shift"]
+                                                                },
+                                                                "amount": {
+                                                                        "type": "number"
+                                                                },
+                                                                "amount_type": {
+                                                                        "type": "string",
+                                                                        "enum": ["years"]
+                                                                }
+                                                        },
+                                                        "required": ["modify", "amount", "amount_type"]
+                                                },
+                                                "to": {
+                                                        "type": "object"
+                                                }
+                                        },
+                                        "required": ["type", "from"]
                                 },
-                                "amount": {
-                                    "type": "number"
+                                "filter": {
+                                        "type": "object"
                                 },
-                                "amount_type": {
-                                    "type": "string",
-                                    "enum": ["years"]
+                                "signal": {
+                                        "type": "object"
+                                },
+                                "action": {
+                                        "type": "object",
+                                        "properties": {
+                                                "buy": {
+                                                        "type": "object"
+                                                },
+                                                "sell": {
+                                                        "type": "object"
+                                                }
+                                        }
                                 }
-                            },
-                            "required": ["modify", "amount", "amount_type"]
                         },
-                        "to": {
-                            "type": "object"
-                        }
-                    },
-                    "required": ["type", "from"]
-                },
-                "filter": {
-                    "type": "object"
-                },
-                "signal": {
-                    "type": "object"
-                },
-                "action": {
-                    "type": "object",
-                    "properties": {
-                        "buy": {
-                            "type": "object"
-                        },
-                        "sell": {
-                            "type": "object"
-                        }
-                    }
+                        "required": ["range", "filter", "signal", "action"]
                 }
-            },
-            "required": ["range", "filter", "signal", "action"]
-        }
-    },
-    "required": ["api", "input"]
+        },
+        "required": ["api", "name", "input"]
 }
 
 
